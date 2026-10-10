@@ -15,21 +15,18 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const int environment = 3;
+// ============================================================
+// WEBSITE
+// ============================================================
 
-String get websiteUrl {
-  if (environment == 1) {
-    return 'https://pms.hashday.in/pms/';
-  } else if (environment == 2) {
-    return 'https://123.201.81.242/sheetal/sheetal/';
-  } else {
-    return 'https://192.168.6.1/sheetal/sheetal/';
-  }
-}
+const String websiteUrl = 'https://192.168.6.1/sheetal/sheetal/';
+
+// ============================================================
 // VERSION UPDATE SETTINGS
 // ============================================================
 
 const String versionJsonUrl = 'https://hashday.in/sheetal/version.json';
+
 const String pmsTerminalUrl = 'https://pms.hashday.in/pms/terminal.php';
 
 // ============================================================
@@ -39,17 +36,9 @@ const String pmsTerminalUrl = 'https://pms.hashday.in/pms/terminal.php';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-
-
-    debugPrint('================================');
-    debugPrint('BUILD ENVIRONMENT = $environment');
-    debugPrint('WEBSITE URL = $websiteUrl');
-    debugPrint('================================');
-
-
-  // ==========================================================
-  // HIDE ANDROID STATUS BAR / NOTCH AREA
-  // ==========================================================
+  debugPrint('================================');
+  debugPrint('WEBSITE URL = $websiteUrl');
+  debugPrint('================================');
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
@@ -98,13 +87,14 @@ class _DashboardWebViewState extends State<DashboardWebView> {
   bool _updateStarted = false;
 
   // ==========================================================
-  // LONG SWIPE REFRESH SETTINGS
+  // TWO FINGER LONG SWIPE REFRESH
   // ==========================================================
 
+  // Both fingers must move at least this distance.
   static const double refreshSwipeDistance = 300.0;
 
   // ==========================================================
-  // TERMINAL.PHP DEVICE INFORMATION
+  // TERMINAL DEVICE INFORMATION
   // ==========================================================
 
   String _deviceName = 'Unavailable';
@@ -126,12 +116,10 @@ class _DashboardWebViewState extends State<DashboardWebView> {
   void initState() {
     super.initState();
 
-    // Start measuring this Sheetal app session uptime.
     _appUptimeWatch.start();
 
     _initializeWebView();
 
-    // Check for new version after app starts.
     _checkForUpdate();
   }
 
@@ -152,26 +140,21 @@ class _DashboardWebViewState extends State<DashboardWebView> {
       debugPrint('VERSION JSON: $versionJsonUrl');
       debugPrint('================================');
 
-      // ========================================================
-      // CURRENT APP VERSION
-      // ========================================================
-
       final packageInfo = await PackageInfo.fromPlatform();
 
       final currentVersion = packageInfo.version;
 
       debugPrint('INSTALLED VERSION: $currentVersion');
 
-      // ========================================================
-      // GET VERSION JSON
-      // ========================================================
-
       final response = await http
           .get(Uri.parse(versionJsonUrl))
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
-        debugPrint('VERSION CHECK FAILED: HTTP ${response.statusCode}');
+        debugPrint(
+          'VERSION CHECK FAILED: '
+          'HTTP ${response.statusCode}',
+        );
 
         return;
       }
@@ -192,15 +175,13 @@ class _DashboardWebViewState extends State<DashboardWebView> {
         return;
       }
 
-      // ========================================================
-      // COMPARE VERSIONS
-      // ========================================================
-
       final comparison = _compareVersions(serverVersion, currentVersion);
 
-      debugPrint('VERSION COMPARISON RESULT: $comparison');
+      debugPrint(
+        'VERSION COMPARISON RESULT: '
+        '$comparison',
+      );
 
-      // Server version is newer.
       if (comparison > 0) {
         debugPrint('NEW VERSION AVAILABLE');
 
@@ -277,46 +258,36 @@ class _DashboardWebViewState extends State<DashboardWebView> {
         return;
       }
 
-      // ========================================================
-      // SHOW UPDATE MESSAGE
-      // ========================================================
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('New version $serverVersion found. Updating...'),
+          content: Text(
+            'New version $serverVersion found. '
+            'Updating...',
+          ),
           duration: const Duration(seconds: 4),
         ),
       );
 
       debugPrint('================================');
-
       debugPrint('DOWNLOADING NEW APK');
-
       debugPrint('VERSION: $serverVersion');
-
       debugPrint('APK: $apkUrl');
-
       debugPrint('================================');
-
-      // ========================================================
-      // DOWNLOAD APK
-      // ========================================================
 
       final response = await http
           .get(Uri.parse(apkUrl))
           .timeout(const Duration(minutes: 5));
 
       if (response.statusCode != 200) {
-        throw Exception('APK download failed: HTTP ${response.statusCode}');
+        throw Exception(
+          'APK download failed: '
+          'HTTP ${response.statusCode}',
+        );
       }
 
       if (response.bodyBytes.isEmpty) {
         throw Exception('Downloaded APK is empty');
       }
-
-      // ========================================================
-      // SAVE APK
-      // ========================================================
 
       final directory = await getTemporaryDirectory();
 
@@ -326,18 +297,20 @@ class _DashboardWebViewState extends State<DashboardWebView> {
 
       debugPrint('APK SAVED: ${apkFile.path}');
 
-      // ========================================================
-      // OPEN ANDROID APK INSTALLER
-      // ========================================================
-
       final result = await OpenFilex.open(
         apkFile.path,
         type: 'application/vnd.android.package-archive',
       );
 
-      debugPrint('APK INSTALLER RESULT: ${result.type}');
+      debugPrint(
+        'APK INSTALLER RESULT: '
+        '${result.type}',
+      );
 
-      debugPrint('APK INSTALLER MESSAGE: ${result.message}');
+      debugPrint(
+        'APK INSTALLER MESSAGE: '
+        '${result.message}',
+      );
     } catch (e, stackTrace) {
       debugPrint('UPDATE ERROR: $e');
 
@@ -365,15 +338,16 @@ class _DashboardWebViewState extends State<DashboardWebView> {
   bool _isTerminalPage(String url) {
     try {
       final currentUri = Uri.tryParse(url);
+
       final pmsUri = Uri.tryParse(pmsTerminalUrl);
 
       debugPrint('========================================');
+
       debugPrint('PMS URL CHECK');
-      debugPrint('========================================');
-      debugPrint('Original URL      : $url');
-      debugPrint('Current URI       : $currentUri');
-      debugPrint('PMS Terminal URL  : $pmsTerminalUrl');
-      debugPrint('PMS URI           : $pmsUri');
+      debugPrint('Original URL: $url');
+      debugPrint('Current URI: $currentUri');
+      debugPrint('PMS Terminal URL: $pmsTerminalUrl');
+      debugPrint('PMS URI: $pmsUri');
 
       if (currentUri == null || pmsUri == null) {
         return false;
@@ -385,17 +359,17 @@ class _DashboardWebViewState extends State<DashboardWebView> {
           currentUri.path.toLowerCase() == pmsUri.path.toLowerCase();
 
       debugPrint('PMS TERMINAL CHECK: $result');
-      debugPrint('CURRENT URL: $url');
 
       return result;
     } catch (e) {
       debugPrint('PMS TERMINAL URL CHECK ERROR: $e');
+
       return false;
     }
   }
 
   // ============================================================
-  // CREATE / RESTORE PERSISTENT DEVICE TOKEN
+  // CREATE / RESTORE DEVICE TOKEN
   // ============================================================
 
   Future<void> _getDeviceToken() async {
@@ -413,20 +387,19 @@ class _DashboardWebViewState extends State<DashboardWebView> {
 
         await prefs.setString('sheetal_device_token', token);
 
-        debugPrint('========================================');
         debugPrint('NEW DEVICE TOKEN CREATED');
+
         debugPrint('DEVICE TOKEN: $token');
-        debugPrint('========================================');
       } else {
-        debugPrint('========================================');
         debugPrint('EXISTING DEVICE TOKEN FOUND');
+
         debugPrint('DEVICE TOKEN: $token');
-        debugPrint('========================================');
       }
 
       _deviceToken = token;
     } catch (e) {
       debugPrint('DEVICE TOKEN ERROR: $e');
+
       _deviceToken = 'Unavailable';
     }
   }
@@ -454,10 +427,6 @@ class _DashboardWebViewState extends State<DashboardWebView> {
       debugPrint('FETCHING DEVICE DETAILS');
 
       debugPrint('================================');
-
-      // ========================================================
-      // DEVICE TOKEN
-      // ========================================================
 
       await _getDeviceToken();
 
@@ -500,37 +469,26 @@ class _DashboardWebViewState extends State<DashboardWebView> {
       final seconds = uptime.inSeconds.remainder(60);
 
       if (hours > 0) {
-        _appUptime = '${hours}h ${minutes}m ${seconds}s';
+        _appUptime =
+            '${hours}h '
+            '${minutes}m '
+            '${seconds}s';
       } else if (minutes > 0) {
-        _appUptime = '${minutes}m ${seconds}s';
+        _appUptime =
+            '${minutes}m '
+            '${seconds}s';
       } else {
         _appUptime = '${seconds}s';
       }
 
       // ========================================================
-      // MAC / IMEI
-      // ========================================================
-      //
-      // These are intentionally NOT fake values.
-      //
-      // Normal modern Android applications generally cannot
-      // obtain the real Wi-Fi MAC address and IMEI values.
-      //
-      // They remain Unavailable unless native/device-level
-      // privileges make them available.
-      //
-      // ========================================================
-
-      // ========================================================
-      // DEVICE TOKEN IS USED IN THE FIELD CURRENTLY LABELLED
-      // "MAC Address".
-      //
-      // This is NOT the real hardware MAC address.
-      // It is a persistent app-generated token.
+      // DEVICE TOKEN
       // ========================================================
 
       _macAddress = _deviceToken;
+
       _imei1 = 'Unavailable';
+
       _imei2 = 'Unavailable';
 
       debugPrint('--------------------------------');
@@ -538,6 +496,7 @@ class _DashboardWebViewState extends State<DashboardWebView> {
       debugPrint('TERMINAL DEVICE DETAILS');
 
       debugPrint('Device Name : $_deviceName');
+
       debugPrint('Device Token: $_deviceToken');
 
       debugPrint('MAC Address : $_macAddress');
@@ -549,10 +508,6 @@ class _DashboardWebViewState extends State<DashboardWebView> {
       debugPrint('App Uptime  : $_appUptime');
 
       debugPrint('--------------------------------');
-
-      // ========================================================
-      // SEND INFORMATION TO terminal.php
-      // ========================================================
 
       await _sendDeviceDetailsToTerminal();
     } catch (e, stackTrace) {
@@ -573,10 +528,6 @@ class _DashboardWebViewState extends State<DashboardWebView> {
       return;
     }
 
-    // ==========================================================
-    // CONVERT VALUES SAFELY TO JAVASCRIPT STRINGS
-    // ==========================================================
-
     final deviceName = jsonEncode(_deviceName);
 
     final macAddress = jsonEncode(_macAddress);
@@ -587,21 +538,9 @@ class _DashboardWebViewState extends State<DashboardWebView> {
 
     final appUptime = jsonEncode(_appUptime);
 
-    // ==========================================================
-    // JAVASCRIPT
-    // ==========================================================
-
     final javascript =
         '''
 (function() {
-
-  console.log("================================");
-  console.log("SHEETAL TERMINAL DEVICE INFO");
-  console.log("================================");
-
-  // ==========================================================
-  // DEVICE INFORMATION OBJECT
-  // ==========================================================
 
   const deviceInfo = {
     deviceName: $deviceName,
@@ -611,40 +550,13 @@ class _DashboardWebViewState extends State<DashboardWebView> {
     appUptime: $appUptime
   };
 
-  // ==========================================================
-  // MAKE INFORMATION AVAILABLE TO PMS PAGE
-  // ==========================================================
-
-  window.SheetalDeviceInfo = deviceInfo;
+  window.SheetalDeviceInfo =
+      deviceInfo;
 
   console.log(
-    "Device Name:",
-    deviceInfo.deviceName
+    "SHEETAL DEVICE INFO",
+    deviceInfo
   );
-
-  console.log(
-    "MAC Address:",
-    deviceInfo.macAddress
-  );
-
-  console.log(
-    "IMEI 1:",
-    deviceInfo.imei1
-  );
-
-  console.log(
-    "IMEI 2:",
-    deviceInfo.imei2
-  );
-
-  console.log(
-    "App Uptime:",
-    deviceInfo.appUptime
-  );
-
-  // ==========================================================
-  // CUSTOM EVENT FOR PMS JAVASCRIPT
-  // ==========================================================
 
   try {
 
@@ -665,10 +577,6 @@ class _DashboardWebViewState extends State<DashboardWebView> {
     );
   }
 
-  // ==========================================================
-  // FIND PMS FIELD AND SET VALUE
-  // ==========================================================
-
   function setField(
     keywords,
     value
@@ -676,7 +584,6 @@ class _DashboardWebViewState extends State<DashboardWebView> {
 
     if (!value ||
         value === "Unavailable") {
-
       return false;
     }
 
@@ -690,7 +597,6 @@ class _DashboardWebViewState extends State<DashboardWebView> {
     ) {
 
       const text = (
-
         (element.id || "") +
         " " +
         (element.name || "") +
@@ -702,7 +608,6 @@ class _DashboardWebViewState extends State<DashboardWebView> {
             "aria-label"
           ) || ""
         )
-
       ).toLowerCase();
 
       for (
@@ -710,16 +615,10 @@ class _DashboardWebViewState extends State<DashboardWebView> {
       ) {
 
         if (
-          text.includes(
-            keyword
-          )
+          text.includes(keyword)
         ) {
 
           try {
-
-            // ==================================================
-            // INPUT / TEXTAREA
-            // ==================================================
 
             if (
               element.tagName
@@ -728,20 +627,20 @@ class _DashboardWebViewState extends State<DashboardWebView> {
             ) {
 
               element.value =
-                value;
+                  value;
 
             } else {
 
               const prototype =
-                Object.getPrototypeOf(
-                  element
-                );
+                  Object.getPrototypeOf(
+                    element
+                  );
 
               const valueSetter =
-                Object.getOwnPropertyDescriptor(
-                  prototype,
-                  "value"
-                );
+                  Object.getOwnPropertyDescriptor(
+                    prototype,
+                    "value"
+                  );
 
               if (
                 valueSetter &&
@@ -756,13 +655,9 @@ class _DashboardWebViewState extends State<DashboardWebView> {
               } else {
 
                 element.value =
-                  value;
+                    value;
               }
             }
-
-            // ==================================================
-            // TRIGGER EVENTS
-            // ==================================================
 
             element.dispatchEvent(
               new Event(
@@ -783,7 +678,7 @@ class _DashboardWebViewState extends State<DashboardWebView> {
             );
 
             console.log(
-              "SHEETAL FIELD UPDATED:",
+              "FIELD UPDATED:",
               keyword,
               value
             );
@@ -804,10 +699,6 @@ class _DashboardWebViewState extends State<DashboardWebView> {
     return false;
   }
 
-  // ==========================================================
-  // DEVICE NAME
-  // ==========================================================
-
   setField(
     [
       "device_name",
@@ -817,10 +708,6 @@ class _DashboardWebViewState extends State<DashboardWebView> {
     ],
     deviceInfo.deviceName
   );
-
-  // ==========================================================
-  // MAC ADDRESS
-  // ==========================================================
 
   setField(
     [
@@ -835,10 +722,6 @@ class _DashboardWebViewState extends State<DashboardWebView> {
     deviceInfo.macAddress
   );
 
-  // ==========================================================
-  // IMEI 1
-  // ==========================================================
-
   setField(
     [
       "imei1",
@@ -849,10 +732,6 @@ class _DashboardWebViewState extends State<DashboardWebView> {
     ],
     deviceInfo.imei1
   );
-
-  // ==========================================================
-  // IMEI 2
-  // ==========================================================
 
   setField(
     [
@@ -865,10 +744,6 @@ class _DashboardWebViewState extends State<DashboardWebView> {
     deviceInfo.imei2
   );
 
-  // ==========================================================
-  // APP UPTIME
-  // ==========================================================
-
   setField(
     [
       "app_uptime",
@@ -879,34 +754,26 @@ class _DashboardWebViewState extends State<DashboardWebView> {
     deviceInfo.appUptime
   );
 
-  console.log(
-    "SHEETAL DEVICE INFORMATION SENT TO TERMINAL.PHP"
-  );
-
 })();
 ''';
 
     try {
       await _controller!.runJavaScript(javascript);
 
-      debugPrint('================================');
-
       debugPrint('DEVICE DETAILS SENT TO terminal.php');
-
-      debugPrint('================================');
     } catch (e) {
       debugPrint('FAILED TO SEND DEVICE DETAILS: $e');
     }
   }
 
-  // ==========================================================
+  // ============================================================
   // INITIALIZE WEBVIEW
-  // ==========================================================
+  // ============================================================
 
   Future<void> _initializeWebView() async {
     try {
       // ========================================================
-      // ANDROID CAMERA + MICROPHONE PERMISSIONS
+      // PERMISSIONS
       // ========================================================
 
       await Permission.camera.request();
@@ -934,20 +801,26 @@ class _DashboardWebViewState extends State<DashboardWebView> {
       await controller.setBackgroundColor(Colors.white);
 
       // ========================================================
-      // JAVASCRIPT CHANNEL
+      // TWO FINGER REFRESH CHANNEL
       // ========================================================
 
       await controller.addJavaScriptChannel(
         'LongSwipeRefresh',
         onMessageReceived: (JavaScriptMessage message) {
-          debugPrint('LONG DOWNWARD SWIPE DETECTED');
+          debugPrint('================================');
+
+          debugPrint('TWO FINGER LONG SWIPE DETECTED');
+
+          debugPrint('MESSAGE: ${message.message}');
+
+          debugPrint('================================');
 
           _refreshPage();
         },
       );
 
       // ========================================================
-      // ANDROID WEBVIEW SETTINGS
+      // ANDROID SETTINGS
       // ========================================================
 
       if (controller.platform is AndroidWebViewController) {
@@ -969,56 +842,32 @@ class _DashboardWebViewState extends State<DashboardWebView> {
         androidController.setMediaPlaybackRequiresUserGesture(false);
 
         // ------------------------------------------------------
-        // CAMERA / MICROPHONE PERMISSION
+        // CAMERA / MICROPHONE
         // ------------------------------------------------------
 
         await androidController.setOnPlatformPermissionRequest((request) async {
-          debugPrint('================================');
-
           debugPrint('WEBVIEW PERMISSION REQUEST');
 
-          debugPrint('Requested permissions: ${request.types}');
-
-          debugPrint('================================');
+          debugPrint('REQUESTED: ${request.types}');
 
           final cameraStatus = await Permission.camera.request();
 
           final microphoneStatus = await Permission.microphone.request();
 
-          debugPrint('Camera permission: $cameraStatus');
-
-          debugPrint('Microphone permission: $microphoneStatus');
-
           if (cameraStatus.isGranted && microphoneStatus.isGranted) {
-            debugPrint('CAMERA + MICROPHONE GRANTED');
-
             await request.grant();
           } else {
-            debugPrint('CAMERA/MICROPHONE DENIED');
-
             await request.deny();
           }
         });
 
-        // ======================================================
+        // ------------------------------------------------------
         // FILE UPLOAD
-        // ======================================================
+        // ------------------------------------------------------
 
         await androidController.setOnShowFileSelector((
           FileSelectorParams params,
         ) async {
-          debugPrint('================================');
-
-          debugPrint('FILE UPLOAD REQUEST');
-
-          debugPrint('Accept types: ${params.acceptTypes}');
-
-          debugPrint('Mode: ${params.mode}');
-
-          debugPrint('Capture enabled: ${params.isCaptureEnabled}');
-
-          debugPrint('================================');
-
           try {
             final result = await FilePicker.platform.pickFiles(
               allowMultiple: params.mode == FileSelectorMode.openMultiple,
@@ -1027,8 +876,6 @@ class _DashboardWebViewState extends State<DashboardWebView> {
             );
 
             if (result == null || result.files.isEmpty) {
-              debugPrint('NO FILE SELECTED');
-
               return <String>[];
             }
 
@@ -1036,12 +883,6 @@ class _DashboardWebViewState extends State<DashboardWebView> {
                 .where((file) => file.path != null)
                 .map((file) => Uri.file(file.path!).toString())
                 .toList();
-
-            debugPrint('FILES SELECTED: ${files.length}');
-
-            for (final file in files) {
-              debugPrint('SELECTED FILE: $file');
-            }
 
             return files;
           } catch (e) {
@@ -1052,15 +893,15 @@ class _DashboardWebViewState extends State<DashboardWebView> {
         });
       }
 
-      // ==========================================================
+      // ========================================================
       // NAVIGATION DELEGATE
-      // ==========================================================
+      // ========================================================
 
       await controller.setNavigationDelegate(
         NavigationDelegate(
-          // ------------------------------------------------------
+          // ----------------------------------------------------
           // PAGE STARTED
-          // ------------------------------------------------------
+          // ----------------------------------------------------
           onPageStarted: (String url) {
             debugPrint('================================');
 
@@ -1077,9 +918,9 @@ class _DashboardWebViewState extends State<DashboardWebView> {
             });
           },
 
-          // ------------------------------------------------------
+          // ----------------------------------------------------
           // PAGE FINISHED
-          // ------------------------------------------------------
+          // ----------------------------------------------------
           onPageFinished: (String url) async {
             debugPrint('================================');
 
@@ -1095,61 +936,48 @@ class _DashboardWebViewState extends State<DashboardWebView> {
               _loading = false;
             });
 
-            // ==================================================
-            // ONLY WHEN terminal.php IS DETECTED
-            // ==================================================
+            // -----------------------------------------------
+            // TERMINAL PAGE
+            // -----------------------------------------------
 
             if (_isTerminalPage(url)) {
-              debugPrint('================================');
-
-              debugPrint('terminal.php FOUND');
-
-              debugPrint('STARTING PMS DEVICE FETCH');
-
-              debugPrint('================================');
-
               await _loadTerminalDeviceDetails();
-            } else {
-              debugPrint('NOT terminal.php');
-
-              debugPrint('PMS DEVICE FETCH SKIPPED');
             }
 
-            // ==================================================
-            // INSTALL LONG DOWNWARD SWIPE DETECTOR
-            // ==================================================
+            // -----------------------------------------------
+            // INSTALL TWO FINGER REFRESH
+            // -----------------------------------------------
 
             await _installLongSwipeRefresh();
           },
 
-          // ======================================================
-          // SSL CERTIFICATE
-          // ======================================================
+          // ----------------------------------------------------
+          // SSL
+          // ----------------------------------------------------
           onSslAuthError: (SslAuthError error) async {
             debugPrint('================================');
 
             debugPrint('SSL CERTIFICATE ERROR');
 
-            debugPrint('Proceeding with SSL connection...');
+            debugPrint('PROCEEDING WITH SSL');
 
             debugPrint('================================');
 
-            // TEST / INTERNAL SERVER ONLY
             await error.proceed();
           },
 
-          // ------------------------------------------------------
+          // ----------------------------------------------------
           // NAVIGATION REQUEST
-          // ------------------------------------------------------
+          // ----------------------------------------------------
           onNavigationRequest: (NavigationRequest request) {
             debugPrint('NAVIGATION: ${request.url}');
 
             return NavigationDecision.navigate;
           },
 
-          // ------------------------------------------------------
-          // WEBVIEW ERROR
-          // ------------------------------------------------------
+          // ----------------------------------------------------
+          // WEB RESOURCE ERROR
+          // ----------------------------------------------------
           onWebResourceError: (WebResourceError error) {
             debugPrint('================================');
 
@@ -1157,20 +985,26 @@ class _DashboardWebViewState extends State<DashboardWebView> {
 
             debugPrint('URL: ${error.url}');
 
-            debugPrint('DESCRIPTION: ${error.description}');
+            debugPrint(
+              'DESCRIPTION: '
+              '${error.description}',
+            );
 
             debugPrint('CODE: ${error.errorCode}');
 
-            debugPrint('MAIN FRAME: ${error.isForMainFrame}');
+            debugPrint(
+              'MAIN FRAME: '
+              '${error.isForMainFrame}',
+            );
 
             debugPrint('================================');
           },
         ),
       );
 
-      // ==========================================================
+      // ========================================================
       // SET CONTROLLER
-      // ==========================================================
+      // ========================================================
 
       if (!mounted) {
         return;
@@ -1178,17 +1012,18 @@ class _DashboardWebViewState extends State<DashboardWebView> {
 
       setState(() {
         _controller = controller;
-
         _loading = true;
       });
 
-      // ==========================================================
-      // OPEN WEBSITE
-      // ==========================================================
+      // ========================================================
+      // LOAD WEBSITE
+      // ========================================================
 
       debugPrint('================================');
 
-      debugPrint('OPENING WEBSITE: $websiteUrl');
+      debugPrint('OPENING WEBSITE:');
+
+      debugPrint(websiteUrl);
 
       debugPrint('================================');
 
@@ -1209,7 +1044,18 @@ class _DashboardWebViewState extends State<DashboardWebView> {
   }
 
   // ============================================================
-  // INSTALL LONG DOWNWARD SWIPE DETECTOR
+  // TWO FINGER LONG SWIPE REFRESH
+  // ============================================================
+  //
+  // ONE FINGER:
+  //     Normal scrolling.
+  //
+  // TWO FINGERS:
+  //     Start at top.
+  //     Both fingers move downward.
+  //     Both must move 300 pixels.
+  //     Then refresh.
+  //
   // ============================================================
 
   Future<void> _installLongSwipeRefresh() async {
@@ -1219,157 +1065,328 @@ class _DashboardWebViewState extends State<DashboardWebView> {
 
     final javascript =
         '''
-      (function() {
+(function() {
 
-        // Prevent duplicate installation
-        if (window.__longSwipeRefreshInstalled) {
-          return;
+  // ========================================================
+  // PREVENT DUPLICATE INSTALLATION
+  // ========================================================
+
+  if (window.__sheetalTwoFingerRefresh) {
+
+    console.log(
+      "TWO FINGER REFRESH ALREADY INSTALLED"
+    );
+
+    return;
+  }
+
+  window.__sheetalTwoFingerRefresh = true;
+
+  // ========================================================
+  // SETTINGS
+  // ========================================================
+
+  const REQUIRED_DISTANCE =
+      $refreshSwipeDistance;
+
+  // ========================================================
+  // STATE
+  // ========================================================
+
+  let tracking = false;
+  let triggered = false;
+
+  let startY1 = 0;
+  let startY2 = 0;
+
+  // ========================================================
+  // GET PAGE SCROLL
+  // ========================================================
+
+  function getScrollTop() {
+
+    return (
+      window.pageYOffset ||
+      document.documentElement.scrollTop ||
+      document.body.scrollTop ||
+      0
+    );
+
+  }
+
+  // ========================================================
+  // TOUCH START
+  // ========================================================
+
+  document.addEventListener(
+    'touchstart',
+    function(event) {
+
+      // -----------------------------------------------
+      // MUST HAVE EXACTLY TWO FINGERS
+      // -----------------------------------------------
+
+      if (!event.touches ||
+          event.touches.length !== 2) {
+
+        tracking = false;
+        triggered = false;
+
+        return;
+      }
+
+      // -----------------------------------------------
+      // MUST START AT PAGE TOP
+      // -----------------------------------------------
+
+      const scrollTop =
+          getScrollTop();
+
+      if (scrollTop > 2) {
+
+        console.log(
+          "TWO FINGER REFRESH:"
+          + " PAGE NOT AT TOP"
+        );
+
+        tracking = false;
+
+        return;
+      }
+
+      // -----------------------------------------------
+      // SAVE BOTH START POSITIONS
+      // -----------------------------------------------
+
+      startY1 =
+          event.touches[0].clientY;
+
+      startY2 =
+          event.touches[1].clientY;
+
+      tracking = true;
+      triggered = false;
+
+      console.log(
+        "TWO FINGER TRACKING STARTED"
+      );
+
+    },
+    {
+      passive: true
+    }
+  );
+
+  // ========================================================
+  // TOUCH MOVE
+  // ========================================================
+
+  document.addEventListener(
+    'touchmove',
+    function(event) {
+
+      if (!tracking ||
+          triggered ||
+          !event.touches ||
+          event.touches.length !== 2) {
+
+        return;
+      }
+
+      // -----------------------------------------------
+      // CURRENT POSITIONS
+      // -----------------------------------------------
+
+      const currentY1 =
+          event.touches[0].clientY;
+
+      const currentY2 =
+          event.touches[1].clientY;
+
+      // -----------------------------------------------
+      // DISTANCE OF EACH FINGER
+      // -----------------------------------------------
+
+      const distance1 =
+          currentY1 - startY1;
+
+      const distance2 =
+          currentY2 - startY2;
+
+      // -----------------------------------------------
+      // BOTH MUST MOVE DOWN
+      // -----------------------------------------------
+
+      if (distance1 <= 0 ||
+          distance2 <= 0) {
+
+        return;
+      }
+
+      // -----------------------------------------------
+      // BOTH MUST REACH 300 PIXELS
+      // -----------------------------------------------
+
+      if (
+          distance1 >= REQUIRED_DISTANCE &&
+          distance2 >= REQUIRED_DISTANCE
+      ) {
+
+        triggered = true;
+        tracking = false;
+
+        console.log(
+          "================================"
+        );
+
+        console.log(
+          "TWO FINGER LONG SWIPE"
+        );
+
+        console.log(
+          "REFRESH TRIGGERED"
+        );
+
+        console.log(
+          "Finger 1:",
+          distance1
+        );
+
+        console.log(
+          "Finger 2:",
+          distance2
+        );
+
+        console.log(
+          "================================"
+        );
+
+        // ---------------------------------------------
+        // SEND MESSAGE TO FLUTTER
+        // ---------------------------------------------
+
+        if (
+            window.LongSwipeRefresh
+        ) {
+
+          window.LongSwipeRefresh.postMessage(
+            "two_finger_refresh"
+          );
+
         }
 
-        window.__longSwipeRefreshInstalled = true;
+      }
 
-        let startY = 0;
-        let currentY = 0;
-        let startScrollY = 0;
-        let isTracking = false;
-        let refreshTriggered = false;
+    },
+    {
+      passive: true
+    }
+  );
 
-        const REQUIRED_DISTANCE =
-            $refreshSwipeDistance;
+  // ========================================================
+  // TOUCH END
+  // ========================================================
 
-        // ================================================
-        // TOUCH START
-        // ================================================
+  document.addEventListener(
+    'touchend',
+    function(event) {
 
-        document.addEventListener(
-          'touchstart',
-          function(event) {
+      if (
+          !event.touches ||
+          event.touches.length === 0
+      ) {
 
-            if (!event.touches ||
-                event.touches.length !== 1) {
+        tracking = false;
 
-              isTracking = false;
-              return;
-            }
+        startY1 = 0;
+        startY2 = 0;
 
-            startY =
-                event.touches[0].clientY;
+      }
 
-            currentY = startY;
+    },
+    {
+      passive: true
+    }
+  );
 
-            startScrollY =
-                window.pageYOffset ||
-                document.documentElement.scrollTop ||
-                document.body.scrollTop ||
-                0;
+  // ========================================================
+  // TOUCH CANCEL
+  // ========================================================
 
-            refreshTriggered = false;
+  document.addEventListener(
+    'touchcancel',
+    function() {
 
-            if (startScrollY <= 2) {
+      tracking = false;
+      triggered = false;
 
-              isTracking = true;
+      startY1 = 0;
+      startY2 = 0;
 
-            } else {
+    },
+    {
+      passive: true
+    }
+  );
 
-              isTracking = false;
-            }
+  // ========================================================
+  // DEBUG
+  // ========================================================
 
-          },
-          { passive: true }
-        );
+  console.log(
+    "================================"
+  );
 
-        // ================================================
-        // TOUCH MOVE
-        // ================================================
+  console.log(
+    "SHEETAL TWO FINGER REFRESH"
+  );
 
-        document.addEventListener(
-          'touchmove',
-          function(event) {
+  console.log(
+    "INSTALLED"
+  );
 
-            if (!isTracking ||
-                refreshTriggered ||
-                !event.touches ||
-                event.touches.length !== 1) {
+  console.log(
+    "Required distance:",
+    REQUIRED_DISTANCE
+  );
 
-              return;
-            }
+  console.log(
+    "One finger refresh: DISABLED"
+  );
 
-            currentY =
-                event.touches[0].clientY;
+  console.log(
+    "Two finger refresh: ENABLED"
+  );
 
-            const distance =
-                currentY - startY;
+  console.log(
+    "================================"
+  );
 
-            // ONLY DOWNWARD MOVEMENT
-            if (distance <= 0) {
-              return;
-            }
-
-            // REQUIRE VERY LONG SWIPE
-            if (distance >=
-                REQUIRED_DISTANCE) {
-
-              refreshTriggered = true;
-
-              console.log(
-                'LONG DOWNWARD SWIPE REFRESH'
-              );
-
-              if (
-                  window.LongSwipeRefresh) {
-
-                window.LongSwipeRefresh
-                    .postMessage(
-                  'refresh'
-                );
-              }
-            }
-
-          },
-          { passive: true }
-        );
-
-        // ================================================
-        // TOUCH END
-        // ================================================
-
-        document.addEventListener(
-          'touchend',
-          function() {
-
-            isTracking = false;
-            startY = 0;
-            currentY = 0;
-
-          },
-          { passive: true }
-        );
-
-        // ================================================
-        // TOUCH CANCEL
-        // ================================================
-
-        document.addEventListener(
-          'touchcancel',
-          function() {
-
-            isTracking = false;
-            startY = 0;
-            currentY = 0;
-
-          },
-          { passive: true }
-        );
-
-      })();
-    ''';
+})();
+''';
 
     try {
       await _controller!.runJavaScript(javascript);
 
-      debugPrint('LONG SWIPE REFRESH DETECTOR INSTALLED');
+      debugPrint('================================');
+
+      debugPrint('TWO FINGER REFRESH INSTALLED');
+
+      debugPrint('ONE FINGER: NO REFRESH');
+
+      debugPrint('TWO FINGER: REFRESH ENABLED');
+
+      debugPrint(
+        'THRESHOLD: '
+        '$refreshSwipeDistance pixels',
+      );
+
+      debugPrint('================================');
     } catch (e) {
-      debugPrint('FAILED TO INSTALL SWIPE DETECTOR: $e');
+      debugPrint(
+        'TWO FINGER REFRESH INSTALL ERROR: '
+        '$e',
+      );
     }
   }
 
@@ -1383,12 +1400,16 @@ class _DashboardWebViewState extends State<DashboardWebView> {
     }
 
     if (_loading) {
+      debugPrint('REFRESH IGNORED - PAGE LOADING');
+
       return;
     }
 
     debugPrint('================================');
 
-    debugPrint('REFRESHING PAGE');
+    debugPrint('TWO FINGER REFRESH');
+
+    debugPrint('RELOADING WEBVIEW');
 
     debugPrint('================================');
 
@@ -1453,26 +1474,23 @@ class _DashboardWebViewState extends State<DashboardWebView> {
       child: Scaffold(
         backgroundColor: Colors.white,
 
-        // ======================================================
-        // NO SAFE AREA
-        // ======================================================
         body: Stack(
           children: [
-            // --------------------------------------------------
+            // ==================================================
             // WEBVIEW
-            // --------------------------------------------------
+            // ==================================================
             if (_controller != null)
               Positioned.fill(child: WebViewWidget(controller: _controller!)),
 
-            // --------------------------------------------------
+            // ==================================================
             // INITIAL LOADING
-            // --------------------------------------------------
+            // ==================================================
             if (_controller == null)
               const Center(child: CircularProgressIndicator()),
 
-            // --------------------------------------------------
-            // TOP LOADING BAR
-            // --------------------------------------------------
+            // ==================================================
+            // LOADING BAR
+            // ==================================================
             if (_controller != null && _loading)
               const Positioned(
                 top: 0,
